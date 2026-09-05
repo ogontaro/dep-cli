@@ -1,0 +1,13 @@
+{
+  "name": "depctl",
+  "description": "component間のバージョン互換性を.depctl/matrix.yamlで検証・管理するCLI「depctl」の使い方とmatrix構築手順を提供する",
+  "version": "0.1.0",
+  "author": {
+    "name": "ogontaro",
+    "email": "uchigane.ryotaro@gmail.com"
+  },
+  "homepage": "https://github.com/ogontaro/dep-cli",
+  "repository": "https://github.com/ogontaro/dep-cli",
+  "license": "MIT",
+  "keywords": ["depctl", "dependency", "version-compatibility", "renovate"]
+}
