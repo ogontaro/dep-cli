@@ -10,9 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+      - uses: jdx/mise-action@v2 # .mise.tomlのbunバージョンをそのまま使う(ローカル開発と揃える)
       - run: bun install --frozen-lockfile
-      - run: bun run typecheck
-      - run: bun test
+      - run: mise run typecheck
+      - run: mise run test

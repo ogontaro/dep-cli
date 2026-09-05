@@ -118,9 +118,12 @@ components:
 
 ## 開発
 
+bun自体を含め、開発に使うツールは [mise](https://mise.jdx.dev/) で用意する(`.mise.toml`でバージョン固定)。
+
 ```sh
-bun install
-bun test
-bun run typecheck
-bun run build   # dist/depctl に単一バイナリを生成
+mise install       # .mise.tomlのbunをインストール
+mise run install   # bun install
+mise run test      # bun test
+mise run typecheck # tsc --noEmit
+mise run build     # dist/depctl に単一バイナリを生成
 ```

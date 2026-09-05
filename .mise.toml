@@ -1,0 +1,19 @@
+[tools]
+# bun.lockと合わせて固定する(bun buildのcompile出力やparseArgs等バージョン依存の挙動があるため)
+bun = "1.3.13"
+
+[tasks.install]
+description = "依存関係をインストールする"
+run = "bun install"
+
+[tasks.test]
+description = "テストを実行する"
+run = "bun run test"
+
+[tasks.typecheck]
+description = "型チェックを実行する"
+run = "bun run typecheck"
+
+[tasks.build]
+description = "dist/depctl に単一バイナリをビルドする"
+run = "bun run build"
