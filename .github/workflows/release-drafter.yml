@@ -1,0 +1,23 @@
+name: Release Drafter
+
+# release-drafterはPRのみ集計対象で、mainへの直接pushは拾えない(公開時の本文は
+# release.yml側のgenerate_release_notesが正。.claude/rules/release.md参照)。
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+
+jobs:
+  update_release_draft:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: release-drafter/release-drafter@v6
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -127,3 +127,9 @@ mise run test      # bun test
 mise run typecheck # tsc --noEmit
 mise run build     # dist/depctl に単一バイナリを生成
 ```
+
+## リリース
+
+`vX.Y.Z` タグをpushすると `.github/workflows/release.yml` が3プラットフォーム分のバイナリを
+GitHub Releaseに公開する。Homebrew tap(`ogontaro/homebrew-tap`)側のformula更新までの
+詳しい手順は [`.claude/rules/release.md`](.claude/rules/release.md) を参照。
