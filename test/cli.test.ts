@@ -132,3 +132,10 @@ test("--help はコマンド一覧を表示する", () => {
   expect(result.code).toBe(0);
   expect(result.stdout).toContain("depctl");
 });
+
+test("--version はpackage.jsonのversionと一致する(二重管理防止)", async () => {
+  const pkg = JSON.parse(await Bun.file(join(import.meta.dir, "..", "package.json")).text());
+  const result = run(dir, ["--version"]);
+  expect(result.code).toBe(0);
+  expect(result.stdout.trim()).toBe(pkg.version);
+});

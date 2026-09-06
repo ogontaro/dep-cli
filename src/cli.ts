@@ -7,8 +7,9 @@ import * as checkCmd from "./commands/check.ts";
 import * as maxCmd from "./commands/max.ts";
 import * as planCmd from "./commands/plan.ts";
 import * as matrixCmd from "./commands/matrix/index.ts";
+import pkg from "../package.json" with { type: "json" };
 
-const VERSION = "0.1.0";
+const VERSION = pkg.version;
 
 const HELP = `depctl ${VERSION} - component間のバージョン互換性を .depctl/matrix.yaml で機械的に検証するCLI
 
