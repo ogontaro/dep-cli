@@ -19,6 +19,15 @@ $ dep plan --set kubernetes=1.36
 到達不可: keda: 現在の 1.34 と目標 1.36 を同時に満たす既知バージョンがありません
 ```
 
+## 仕組み
+
+![dep の全体像](docs/concepts.svg)
+
+- **config.yaml**(人間が書く)→ リポジトリの実ファイルから現在バージョンを読み取る → **State**
+- **matrix.yaml**(AI が作る)→ 各 component のバージョンが対応する kubernetes 範囲
+- **dep** が State と matrix を突き合わせ、`status` / `check` / `max` / `plan` を出す。`renovate sync` で上限を `renovate.json5` に書き戻す
+- matrix は「各 component → 1つの pivot(kubernetes)」の**星型**でのみ関係を持つ(v1)
+
 ## インストール
 
 ```sh

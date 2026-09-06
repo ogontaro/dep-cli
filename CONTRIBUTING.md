@@ -10,6 +10,7 @@ mise run install   # bun install
 mise run test      # bun test
 mise run typecheck # tsc --noEmit
 mise run build     # dist/dep に単一バイナリを生成
+mise run diagram   # docs/concepts.d2 → docs/concepts.svg を再生成
 ```
 
 ## リポジトリ構成

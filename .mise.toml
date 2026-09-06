@@ -1,6 +1,7 @@
 [tools]
 # bun.lockと合わせて固定する(bun buildのcompile出力やparseArgs等バージョン依存の挙動があるため)
 bun = "1.3.13"
+d2 = "0.8.1" # docs/concepts.d2 の再生成用
 
 [tasks.install]
 description = "依存関係をインストールする"
@@ -17,3 +18,7 @@ run = "bun run typecheck"
 [tasks.build]
 description = "dist/dep に単一バイナリをビルドする"
 run = "bun run build"
+
+[tasks.diagram]
+description = "docs/concepts.d2 から concepts.svg を再生成する"
+run = "d2 --layout dagre --pad 40 docs/concepts.d2 docs/concepts.svg"
