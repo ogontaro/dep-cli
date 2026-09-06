@@ -1,14 +1,23 @@
 # dep
 
-コンポーネント間のバージョン互換性(「このコンポーネントのこのバージョンは、相手コンポーネントのどの範囲のバージョンに対応するか」)を
-`.dep/matrix.yaml` に記録し、リポジトリの実ファイルから読んだ現在バージョン(State)と突き合わせて機械的に検証・提案する汎用CLIです。
+複数のコンポーネントが「互いのバージョンで対応範囲が縛られている」状況を、機械的に扱うCLIです。
 
-典型的なユースケース: Renovate 等が個別に「新しいバージョンが出ています」と提案してくるが、コンポーネント同士が
-静的な上下限のバージョン互換制約(例: CNIのバージョンによってサポートするKubernetesバージョンが決まっている)で
-結びついていて、個別に上げると壊れる状況を、機械判定で解決する。
+たとえば Kubernetes とその addon(CNI・cert-manager 等)。addon のバージョンごとに対応する
+Kubernetes の範囲が決まっていて、個別に上げると壊れます。`dep` は各コンポーネントの対応範囲を
+1つの表(`.dep/matrix.yaml`)に持ち、いま何をどこまで上げてよいかを答えます。
 
-dep本体は特定のコンポーネント名やエコシステムを一切知りません。何を・どこから・どう互換とみなすかは
-すべて `.dep/` 配下の2つのファイルで表現します。
+**表は AI に作らせる前提です。** 上流ドキュメント(サポートマトリクス等)を調べて表に落とす作業は、
+同梱の Claude Code プラグイン(`build-compat-matrix` skill)が担当します。人間が書くのは
+「現在バージョンの読み取り方」だけです。
+
+```
+$ dep max kubernetes
+kubernetes の上限: 1.34
+律速: keda(1.32..1.34)
+
+$ dep plan --set kubernetes=1.36
+到達不可: keda: 現在の 1.34 と目標 1.36 を同時に満たす既知バージョンがありません
+```
 
 ## インストール
 
@@ -16,148 +25,121 @@ dep本体は特定のコンポーネント名やエコシステムを一切知�
 brew install ogontaro/tap/dep
 ```
 
-## 概念モデル
+## 使い方
 
-- **Component**: バージョンを持つ管理対象(例: kubernetes, cilium)
-- **Pivot**: 全Componentの互換性がそこを基準に語られる1つのハブComponent(例: kubernetes)。
-  v1は「各Component → pivot」の星型トポロジーのみをサポートする
-- **Matrix**(`.dep/matrix.yaml`): Component×Versionごとに「pivotの対応範囲」を記録した、環境非依存の互換性データ。
-  手編集も可能だが、基本は `dep matrix add` コマンドで組み立てる
-- **Config**(`.dep/config.yaml`): 利用側リポジトリ固有の設定。各Componentの現在バージョンをどのファイルの
-  どの正規表現で読み取るか、を書く
-- **State**: Configの`source`定義に従ってリポジトリの実ファイルから読み取った、現在の各Componentバージョン
+`dep` は cwd から親方向へ `.dep/` を探します(`.git/` と同じ)。中に2つのファイルを置きます。
 
-`.dep/` は `.git/` と同じように、実行時のカレントディレクトリから親方向へ探索して見つけます。
+### 1. `.dep/config.yaml` を書く(人間、数行)
 
-## クイックスタート
-
-### 1. matrixをコマンドで組み立てる(matrix.yamlはまだ無くてよい)
-
-```sh
-dep matrix add cilium 1.19 --requires kubernetes=1.32..1.35 --pivot kubernetes \
-  --source "https://docs.cilium.io/en/v1.19/network/kubernetes/compatibility/" --retrieved 2026-09-03
-
-dep matrix add cilium 1.20 --requires kubernetes=1.33..1.36 \
-  --source "https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/" --retrieved 2026-09-03
-```
-
-初回だけ `--pivot <component>` が必要です(`.dep/matrix.yaml` が無ければこのタイミングで新規作成されます)。
-2回目以降は不要です。
-
-### 2. config.yamlで現在バージョンの読み取り方を書く
+各コンポーネントの「現在バージョンをどのファイルのどの正規表現で読むか」を書きます。
 
 ```yaml
-# .dep/config.yaml
 version: 1
 components:
   kubernetes:
     source:
       file: terraform/talos/variables.tf
-      pattern: 'kubernetes_version"\s*\{[\s\S]*?default\s*=\s*"v(?<version>[0-9.]+)"'
+      pattern: 'kubernetes_version"[\s\S]*?default\s*=\s*"v(?<version>[0-9.]+)"'
+    renovate:                       # renovate 連携する場合だけ(後述)
+      file: renovate.json5
   cilium:
     source:
       file: kubernetes/clusters/mycluster/cilium/helmfile.yaml
       pattern: 'chart:\s*cilium/cilium[\s\S]*?version:\s*(?<version>\S+)'
-    renovate:                       # `dep renovate sync` の対象にする(任意)
-      file: renovate.json5
 ```
 
 `pattern` は名前付きキャプチャ `(?<version>...)` を1つ含む正規表現です。
 
-### 3. 検証・提案コマンドを使う
+### 2. `.dep/matrix.yaml` を AI に作らせる
+
+`.dep/` のあるリポジトリで Claude Code に頼みます。
+
+> cilium と kubernetes の互換性を調べて matrix に入れて
+
+`build-compat-matrix` skill が上流の公式ドキュメントを調べ、`dep matrix add` を実行して
+`.dep/matrix.yaml` を組み立てます(出典 URL と取得日も記録されます)。手で書くこともできますが、
+基本は AI 任せです。
+
+### 3. 日々のコマンド
 
 ```sh
-dep status                       # 現在の各componentバージョンを表示
-dep check                        # 現在StateをMatrixで検証(未収録は違反として扱う)
-dep max kubernetes               # 他componentを現状に固定した場合のkubernetesの上限
-dep plan --set kubernetes=1.36   # 目標への、毎ホップMatrix妥当な順序付き経路
+dep status                       # 現在の各コンポーネントのバージョン
+dep check                        # 現状が matrix と矛盾しないか(未収録は違反扱い)
+dep max kubernetes               # いま kubernetes をどこまで上げてよいか(律速も表示)
+dep plan --set kubernetes=1.36   # そこへ至る手順、または到達不可の理由
+dep matrix outdated              # 上流に新しいバージョンが出て matrix が古くなっていないか
+dep renovate sync                # 上限を renovate.json5 の allowedVersions に書き戻す
 ```
 
 ## コマンド一覧
 
 | コマンド | 役割 |
 |---|---|
-| `dep status` | 現在の各componentバージョンを表示する |
-| `dep check` | 現在のStateをmatrixで検証する。未収録は互換扱いにせず違反として報告する |
-| `dep max <component>` | 他componentを現在Stateに固定した場合の`<component>`の上限を表示する |
-| `dep plan --set <component>=<version\|max>` | 目標への、毎ホップmatrix妥当な順序付き経路を提示する。到達不可なら理由を返す |
-| `dep matrix show [component]` | matrixを閲覧する |
-| `dep matrix add <component> <version> --requires <pivot>=<min..max> [--source <url>] [--retrieved <date>] [--extra key=value] [--pivot <component>]` | matrixに行を追記する |
-| `dep matrix rm <component> <version>` | matrixから行を削除する |
-| `dep matrix validate` | matrixのスキーマ・整合性を検査する |
-| `dep matrix outdated` | `releases`に設定した各componentの最新リリースに対し、matrix未収録のマイナーバージョンを検知する |
-| `dep renovate sync [--dry-run]` | `config.yaml`で`renovate:`を設定した各componentの`dep max`を計算し、renovate設定の`allowedVersions`を更新する |
+| `dep status` | 現在の各コンポーネントのバージョンを表示 |
+| `dep check` | 現状を matrix で検証(未収録は違反、終了コード非ゼロ) |
+| `dep max <component>` | 他を現状に固定したときの `<component>` の上限 |
+| `dep plan --set <component>=<version\|max>` | 目標への順序付き手順。到達不可なら理由 |
+| `dep matrix show [component]` | matrix を表示 |
+| `dep matrix add <component> <version> --requires <pivot>=<min..max> [--source] [--retrieved] [--extra k=v] [--pivot]` | matrix に行を追加(主に AI が実行) |
+| `dep matrix rm <component> <version>` | matrix から行を削除 |
+| `dep matrix validate` | matrix のスキーマ・整合性を検査 |
+| `dep matrix outdated` | 上流の最新に対し matrix 未収録のマイナーを検知(終了コード非ゼロ) |
+| `dep renovate sync [--dry-run]` | `max` の結果を renovate の `allowedVersions` に反映(差分あり `--dry-run` は非ゼロ) |
 
-全コマンド共通で `--json` を付けるとJSON出力になります(スクリプト連携・CI用)。
-`check` / `matrix validate` / `matrix outdated` は違反や未収録があると終了コード非ゼロを返します。
+すべて `--json` を付けると JSON 出力になります。
 
-## matrix.yaml スキーマ
+## `.dep/matrix.yaml` の中身
+
+AI が生成しますが、読み方・手直しのために構造を載せておきます。
 
 ```yaml
 version: 1
-pivot: kubernetes
-releases:                    # `dep matrix outdated` が最新リリースを調べに行く先(任意)
-  cilium:
-    type: helm-index         # または github-releases
-    url: https://helm.cilium.io/index.yaml
-    chart: cilium
+pivot: kubernetes                # 互換範囲の基準にする1コンポーネント
+releases:                        # matrix outdated が最新を調べに行く先(任意)
+  cilium: { type: helm-index, url: https://helm.cilium.io/index.yaml, chart: cilium }
+  talos:  { type: github-releases, repo: siderolabs/talos }
 components:
   cilium:
-    "1.19":                  # マイナー粒度のキー
-      requires:
-        kubernetes: 1.32..1.35   # 閉区間(両端含む)
+    "1.19":                                    # マイナー粒度
+      requires: { kubernetes: 1.32..1.35 }     # このバージョンが対応する pivot の範囲(両端含む)
       source: https://docs.cilium.io/en/v1.19/network/kubernetes/compatibility/
-      retrieved: 2026-09-03
-      # appVersion のような任意の追加フィールドも --extra で保存できる
-      # (helm chartバージョンと本体appVersionがズレるcomponent向け)
+      retrieved: 2026-09-06
 ```
 
-## renovate連携(`dep renovate sync`)
+- **pivot**: すべての互換範囲は pivot(例 kubernetes)を軸に表現します。pivot を介さない
+  コンポーネント同士の直接依存は扱いません(v1)。
+- **未収録は互換とみなしません。** matrix に行が無ければ `check` / `max` は違反・エラーにします。
+- 上流が「supported」と「tested」を別々に出している場合は、狭いほう(supported)を採ります。
 
-`config.yaml` で `renovate: { file: ... }` を設定した各 component について、`dep max <component>`
-(pivot は全体の交差、それ以外は現在の pivot を含む最上位)を計算し、renovate 設定ファイル内の
-`allowedVersions` を `<次のマイナー`(例: 上限 1.34 → `"<1.35"`)に書き換えます。
+## renovate 連携
 
-対象の packageRule には、オブジェクトの先頭に **マーカーコメント** を1行足しておきます:
+`config.yaml` で `renovate: { file: ... }` を設定したコンポーネントは、`dep renovate sync` で
+`max` の結果を renovate 設定の `allowedVersions` に書き戻せます(例: 上限 1.35 → `"<1.36"`)。
+
+対象の packageRule の先頭にマーカーコメントを1行足しておきます。`dep` はこのオブジェクト内の
+`allowedVersions` だけをテキスト置換するので、コメントや他の設定は保持されます。
 
 ```json5
 "packageRules": [
   {
     // dep:allowedVersions kubernetes
     "matchPackageNames": ["kubernetes/kubernetes"],
-    "allowedVersions": "<1.34"   // dep が維持する。無ければマーカー直後に挿入される
+    "allowedVersions": "<1.34"
   }
 ]
 ```
 
-`dep` はこのマーカー直後のオブジェクト内の `allowedVersions` だけをテキスト置換するので、
-コメントや他の設定は保持されます。`--dry-run` で差分プレビュー(変更ありなら終了コード非ゼロ)。
-
-## 制約(v1スコープ)
-
-- トポロジーはpivot1つの星型のみ。任意のComponentペア間の直接依存は扱わない
-- バージョンはマイナー粒度(major.minor)でのみ比較する
-- `.dep/matrix.yaml` にドメインデータ(具体的なコンポーネント名や互換範囲)を1つも同梱しない。
-  実データの投入は利用側リポジトリで `dep matrix add` を使って行う
-
 ## Claude Code プラグイン
 
-このリポジトリは Claude Code のプラグインも兼ねています。インストールすると `build-compat-matrix`
-skill が有効になり、Claude が次を代行できるようになります。
-
-- `.dep/` のあるリポジトリで `dep status/check/max/plan` を適切に使う
-- 上流ドキュメント(各コンポーネントのサポートマトリクス等)を調べて `dep matrix add` で
-  `.dep/matrix.yaml` を埋める(調査はサブエージェントに委任、出典・取得日を必ず記録、
-  未確認なら推測せず「未確認」とする、といった手順が skill に定義されている)
-
-インストール(リポジトリを clone してディレクトリを指定する):
+このリポジトリ自体が Claude Code プラグインです。インストールすると `build-compat-matrix` skill が
+有効になり、`dep` のコマンド操作と matrix 構築(上流調査 → `dep matrix add`)を Claude が代行します。
 
 ```sh
 git clone https://github.com/ogontaro/dep-cli.git
 claude --plugin-dir ./dep-cli
 ```
 
-`~/.claude/skills/dep/` に配置すると次のセッションから自動で有効になります。
+`~/.claude/skills/dep/` に置くと次回セッションから自動で有効になります。
 
 ## ライセンス
 
