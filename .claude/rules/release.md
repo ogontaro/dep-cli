@@ -3,7 +3,7 @@ paths:
   - "**"
 ---
 
-# depctlのコミット/リリース運用
+# depのコミット/リリース運用
 
 dep-cliへの変更をcommit・pushしたら、ユーザーから改めて「リリースして」と言われるのを
 待たず、**そのつど続けてリリースまで行う**(release-drafterは使わない。廃止済み)。
@@ -15,7 +15,7 @@ dep-cliへの変更をcommit・pushしたら、ユーザーから改めて「リ
 
 ## バージョン番号の決め方(semver)
 
-`.depctl/matrix.yaml` / `config.yaml` のスキーマ互換性で判断する。
+`.dep/matrix.yaml` / `config.yaml` のスキーマ互換性で判断する。
 
 | 変更内容 | bump |
 |---|---|
@@ -31,14 +31,14 @@ dep-cliへの変更をcommit・pushしたら、ユーザーから改めて「リ
 3. 同名 `vX.Y.Z` のtagを作成しpush(annotated。tagのpushで`release.yml`が起動する)
 4. `release.yml` の完了を待つ(`gh run watch`等)。3プラットフォーム分のバイナリと
    `checksums.txt`がGitHub Releaseに添付される
-5. `ogontaro/homebrew-tap` リポジトリの `Formula/depctl.rb` を更新する
+5. `ogontaro/homebrew-tap` リポジトリの `Formula/dep.rb` を更新する
    - `version` を新バージョンに
    - 3つの `sha256` を、4で生成された `checksums.txt` から取得した値に更新する。
      **Formula内の古い値を使い回さない**(バイナリはビルドのたびに内容が変わり
      チェックサムも変わるため、必ずその場で再取得・再計算する)
    - commit・push(こちらも git MCP経由)
-6. `brew untap ogontaro/tap && brew tap ogontaro/tap && brew upgrade ogontaro/tap/depctl`
-   (または新規`brew install`)で実際にインストールし、`depctl --version`が新バージョンを
+6. `brew untap ogontaro/tap && brew tap ogontaro/tap && brew upgrade ogontaro/tap/dep`
+   (または新規`brew install`)で実際にインストールし、`dep --version`が新バージョンを
    返すことを確認する
 
 ## 補足

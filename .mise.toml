@@ -15,5 +15,5 @@ description = "型チェックを実行する"
 run = "bun run typecheck"
 
 [tasks.build]
-description = "dist/depctl に単一バイナリをビルドする"
+description = "dist/dep に単一バイナリをビルドする"
 run = "bun run build"

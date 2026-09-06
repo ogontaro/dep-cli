@@ -3,7 +3,7 @@ import { resolveOrCreateMatrix, saveMatrix, setEntry, type MatrixEntry } from ".
 import { parseRange } from "../../range.ts";
 
 // matrix.yaml をゼロから組み立てられるようにするための中心コマンド。
-// 例: depctl matrix add cilium 1.19 --requires kubernetes=1.32..1.35 --source https://... --retrieved 2026-09-03 --pivot kubernetes
+// 例: dep matrix add cilium 1.19 --requires kubernetes=1.32..1.35 --source https://... --retrieved 2026-09-03 --pivot kubernetes
 export function run(argv: string[]): void {
   const { values, positionals } = parseArgs({
     args: argv,
@@ -19,7 +19,7 @@ export function run(argv: string[]): void {
   const [component, version] = positionals;
   if (!component || !version) {
     throw new Error(
-      "使い方: depctl matrix add <component> <version> --requires <target>=<min..max> [--source <url>] [--retrieved <date>] [--extra key=value] [--pivot <component>(新規作成時のみ)]",
+      "使い方: dep matrix add <component> <version> --requires <target>=<min..max> [--source <url>] [--retrieved <date>] [--extra key=value] [--pivot <component>(新規作成時のみ)]",
     );
   }
   if (!values.requires || values.requires.length === 0) {

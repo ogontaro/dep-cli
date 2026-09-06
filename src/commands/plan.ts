@@ -10,7 +10,7 @@ export function run(argv: string[]): void {
     args: argv,
     options: { json: { type: "boolean" }, set: { type: "string" } },
   });
-  if (!values.set) throw new Error("使い方: depctl plan --set <component>=<version|max>");
+  if (!values.set) throw new Error("使い方: dep plan --set <component>=<version|max>");
   const eq = values.set.indexOf("=");
   if (eq < 0) throw new Error(`--set は component=version の形式で指定してください: ${values.set}`);
   const component = values.set.slice(0, eq);

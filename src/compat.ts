@@ -63,7 +63,7 @@ export function computeMaxPivot(matrix: Matrix, state: State): MaxResult {
     if (name === pivot) continue;
     const range = getRange(matrix, name, version, pivot);
     if (!range) {
-      errors.push(`${name}@${version} は matrix 未収録のため上限を計算できません(先に "depctl matrix add" してください)`);
+      errors.push(`${name}@${version} は matrix 未収録のため上限を計算できません(先に "dep matrix add" してください)`);
       continue;
     }
     limitedBy.push({ component: name, range });
@@ -186,7 +186,7 @@ function planComponent(matrix: Matrix, state: State, component: string, target: 
       steps: [],
       reason:
         `${component}@${target} の対応範囲(${range.min}..${range.max})に現在の ${pivot} ${pivotVersion} が含まれません。` +
-        `先に "depctl plan --set ${pivot}=<version>" で ${pivot} 側の移行を検討してください`,
+        `先に "dep plan --set ${pivot}=<version>" で ${pivot} 側の移行を検討してください`,
     };
   }
   const curV = state[component];

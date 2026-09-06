@@ -1,19 +1,19 @@
-# depctl
+# dep
 
 コンポーネント間のバージョン互換性(「このコンポーネントのこのバージョンは、相手コンポーネントのどの範囲のバージョンに対応するか」)を
-`.depctl/matrix.yaml` に記録し、リポジトリの実ファイルから読んだ現在バージョン(State)と突き合わせて機械的に検証・提案する汎用CLIです。
+`.dep/matrix.yaml` に記録し、リポジトリの実ファイルから読んだ現在バージョン(State)と突き合わせて機械的に検証・提案する汎用CLIです。
 
 典型的なユースケース: Renovate 等が個別に「新しいバージョンが出ています」と提案してくるが、コンポーネント同士が
 静的な上下限のバージョン互換制約(例: CNIのバージョンによってサポートするKubernetesバージョンが決まっている)で
 結びついていて、個別に上げると壊れる状況を、機械判定で解決する。
 
-depctl本体は特定のコンポーネント名やエコシステムを一切知りません。何を・どこから・どう互換とみなすかは
-すべて `.depctl/` 配下の2つのファイルで表現します。
+dep本体は特定のコンポーネント名やエコシステムを一切知りません。何を・どこから・どう互換とみなすかは
+すべて `.dep/` 配下の2つのファイルで表現します。
 
 ## インストール
 
 ```sh
-brew install ogontaro/tap/depctl
+brew install ogontaro/tap/dep
 ```
 
 ## 概念モデル
@@ -21,33 +21,33 @@ brew install ogontaro/tap/depctl
 - **Component**: バージョンを持つ管理対象(例: kubernetes, cilium)
 - **Pivot**: 全Componentの互換性がそこを基準に語られる1つのハブComponent(例: kubernetes)。
   v1は「各Component → pivot」の星型トポロジーのみをサポートする
-- **Matrix**(`.depctl/matrix.yaml`): Component×Versionごとに「pivotの対応範囲」を記録した、環境非依存の互換性データ。
-  手編集も可能だが、基本は `depctl matrix add` コマンドで組み立てる
-- **Config**(`.depctl/config.yaml`): 利用側リポジトリ固有の設定。各Componentの現在バージョンをどのファイルの
+- **Matrix**(`.dep/matrix.yaml`): Component×Versionごとに「pivotの対応範囲」を記録した、環境非依存の互換性データ。
+  手編集も可能だが、基本は `dep matrix add` コマンドで組み立てる
+- **Config**(`.dep/config.yaml`): 利用側リポジトリ固有の設定。各Componentの現在バージョンをどのファイルの
   どの正規表現で読み取るか、を書く
 - **State**: Configの`source`定義に従ってリポジトリの実ファイルから読み取った、現在の各Componentバージョン
 
-`.depctl/` は `.git/` と同じように、実行時のカレントディレクトリから親方向へ探索して見つけます。
+`.dep/` は `.git/` と同じように、実行時のカレントディレクトリから親方向へ探索して見つけます。
 
 ## クイックスタート
 
 ### 1. matrixをコマンドで組み立てる(matrix.yamlはまだ無くてよい)
 
 ```sh
-depctl matrix add cilium 1.19 --requires kubernetes=1.32..1.35 --pivot kubernetes \
+dep matrix add cilium 1.19 --requires kubernetes=1.32..1.35 --pivot kubernetes \
   --source "https://docs.cilium.io/en/v1.19/network/kubernetes/compatibility/" --retrieved 2026-09-03
 
-depctl matrix add cilium 1.20 --requires kubernetes=1.33..1.36 \
+dep matrix add cilium 1.20 --requires kubernetes=1.33..1.36 \
   --source "https://docs.cilium.io/en/v1.20/network/kubernetes/compatibility/" --retrieved 2026-09-03
 ```
 
-初回だけ `--pivot <component>` が必要です(`.depctl/matrix.yaml` が無ければこのタイミングで新規作成されます)。
+初回だけ `--pivot <component>` が必要です(`.dep/matrix.yaml` が無ければこのタイミングで新規作成されます)。
 2回目以降は不要です。
 
 ### 2. config.yamlで現在バージョンの読み取り方を書く
 
 ```yaml
-# .depctl/config.yaml
+# .dep/config.yaml
 version: 1
 components:
   kubernetes:
@@ -65,25 +65,25 @@ components:
 ### 3. 検証・提案コマンドを使う
 
 ```sh
-depctl status                       # 現在の各componentバージョンを表示
-depctl check                        # 現在StateをMatrixで検証(未収録は違反として扱う)
-depctl max kubernetes               # 他componentを現状に固定した場合のkubernetesの上限
-depctl plan --set kubernetes=1.36   # 目標への、毎ホップMatrix妥当な順序付き経路
+dep status                       # 現在の各componentバージョンを表示
+dep check                        # 現在StateをMatrixで検証(未収録は違反として扱う)
+dep max kubernetes               # 他componentを現状に固定した場合のkubernetesの上限
+dep plan --set kubernetes=1.36   # 目標への、毎ホップMatrix妥当な順序付き経路
 ```
 
 ## コマンド一覧
 
 | コマンド | 役割 |
 |---|---|
-| `depctl status` | 現在の各componentバージョンを表示する |
-| `depctl check` | 現在のStateをmatrixで検証する。未収録は互換扱いにせず違反として報告する |
-| `depctl max <component>` | 他componentを現在Stateに固定した場合の`<component>`の上限を表示する |
-| `depctl plan --set <component>=<version\|max>` | 目標への、毎ホップmatrix妥当な順序付き経路を提示する。到達不可なら理由を返す |
-| `depctl matrix show [component]` | matrixを閲覧する |
-| `depctl matrix add <component> <version> --requires <pivot>=<min..max> [--source <url>] [--retrieved <date>] [--extra key=value] [--pivot <component>]` | matrixに行を追記する |
-| `depctl matrix rm <component> <version>` | matrixから行を削除する |
-| `depctl matrix validate` | matrixのスキーマ・整合性を検査する |
-| `depctl matrix outdated` | `releases`に設定した各componentの最新リリースに対し、matrix未収録のマイナーバージョンを検知する |
+| `dep status` | 現在の各componentバージョンを表示する |
+| `dep check` | 現在のStateをmatrixで検証する。未収録は互換扱いにせず違反として報告する |
+| `dep max <component>` | 他componentを現在Stateに固定した場合の`<component>`の上限を表示する |
+| `dep plan --set <component>=<version\|max>` | 目標への、毎ホップmatrix妥当な順序付き経路を提示する。到達不可なら理由を返す |
+| `dep matrix show [component]` | matrixを閲覧する |
+| `dep matrix add <component> <version> --requires <pivot>=<min..max> [--source <url>] [--retrieved <date>] [--extra key=value] [--pivot <component>]` | matrixに行を追記する |
+| `dep matrix rm <component> <version>` | matrixから行を削除する |
+| `dep matrix validate` | matrixのスキーマ・整合性を検査する |
+| `dep matrix outdated` | `releases`に設定した各componentの最新リリースに対し、matrix未収録のマイナーバージョンを検知する |
 
 全コマンド共通で `--json` を付けるとJSON出力になります(スクリプト連携・CI用)。
 `check` / `matrix validate` / `matrix outdated` は違反や未収録があると終了コード非ゼロを返します。
@@ -93,7 +93,7 @@ depctl plan --set kubernetes=1.36   # 目標への、毎ホップMatrix妥当な
 ```yaml
 version: 1
 pivot: kubernetes
-releases:                    # `depctl matrix outdated` が最新リリースを調べに行く先(任意)
+releases:                    # `dep matrix outdated` が最新リリースを調べに行く先(任意)
   cilium:
     type: helm-index         # または github-releases
     url: https://helm.cilium.io/index.yaml
@@ -113,17 +113,17 @@ components:
 
 - トポロジーはpivot1つの星型のみ。任意のComponentペア間の直接依存は扱わない
 - バージョンはマイナー粒度(major.minor)でのみ比較する
-- `.depctl/matrix.yaml` にドメインデータ(具体的なコンポーネント名や互換範囲)を1つも同梱しない。
-  実データの投入は利用側リポジトリで `depctl matrix add` を使って行う
+- `.dep/matrix.yaml` にドメインデータ(具体的なコンポーネント名や互換範囲)を1つも同梱しない。
+  実データの投入は利用側リポジトリで `dep matrix add` を使って行う
 
 ## Claude Code プラグイン
 
 このリポジトリは Claude Code のプラグインも兼ねています。インストールすると `build-compat-matrix`
 skill が有効になり、Claude が次を代行できるようになります。
 
-- `.depctl/` のあるリポジトリで `depctl status/check/max/plan` を適切に使う
-- 上流ドキュメント(各コンポーネントのサポートマトリクス等)を調べて `depctl matrix add` で
-  `.depctl/matrix.yaml` を埋める(調査はサブエージェントに委任、出典・取得日を必ず記録、
+- `.dep/` のあるリポジトリで `dep status/check/max/plan` を適切に使う
+- 上流ドキュメント(各コンポーネントのサポートマトリクス等)を調べて `dep matrix add` で
+  `.dep/matrix.yaml` を埋める(調査はサブエージェントに委任、出典・取得日を必ず記録、
   未確認なら推測せず「未確認」とする、といった手順が skill に定義されている)
 
 インストール(リポジトリを clone してディレクトリを指定する):
@@ -133,7 +133,7 @@ git clone https://github.com/ogontaro/dep-cli.git
 claude --plugin-dir ./dep-cli
 ```
 
-`~/.claude/skills/depctl/` に配置すると次のセッションから自動で有効になります。
+`~/.claude/skills/dep/` に配置すると次のセッションから自動で有効になります。
 
 ## ライセンス
 

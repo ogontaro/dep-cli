@@ -2,33 +2,33 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { findDepctlDir, loadConfig } from "../src/config.ts";
+import { findDepDir, loadConfig } from "../src/config.ts";
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "depctl-config-"));
+  dir = mkdtempSync(join(tmpdir(), "dep-config-"));
 });
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test("findDepctlDirはcwdから親方向へ.depctlを探索する(git方式)", () => {
-  mkdirSync(join(dir, ".depctl"), { recursive: true });
+test("findDepDirはcwdから親方向へ.depを探索する(git方式)", () => {
+  mkdirSync(join(dir, ".dep"), { recursive: true });
   const nested = join(dir, "a", "b", "c");
   mkdirSync(nested, { recursive: true });
-  expect(findDepctlDir(nested)).toBe(join(dir, ".depctl"));
+  expect(findDepDir(nested)).toBe(join(dir, ".dep"));
 });
 
 test("見つからなければ例外", () => {
-  expect(() => findDepctlDir(dir)).toThrow();
+  expect(() => findDepDir(dir)).toThrow();
 });
 
 describe("loadConfig", () => {
   test("config.yamlを読み込む", () => {
-    const depctlDir = join(dir, ".depctl");
-    mkdirSync(depctlDir, { recursive: true });
+    const depDir = join(dir, ".dep");
+    mkdirSync(depDir, { recursive: true });
     writeFileSync(
-      join(depctlDir, "config.yaml"),
+      join(depDir, "config.yaml"),
       `version: 1\ncomponents:\n  platform:\n    source:\n      file: versions.txt\n      pattern: 'platform=(?<version>\\S+)'\n`,
     );
     const discovered = loadConfig(dir);
@@ -37,7 +37,7 @@ describe("loadConfig", () => {
   });
 
   test("config.yamlが無ければ例外", () => {
-    mkdirSync(join(dir, ".depctl"), { recursive: true });
+    mkdirSync(join(dir, ".dep"), { recursive: true });
     expect(() => loadConfig(dir)).toThrow();
   });
 });

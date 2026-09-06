@@ -1,14 +1,14 @@
 {
-  "name": "depctl",
+  "name": "dep",
   "version": "0.1.2",
   "private": true,
   "license": "MIT",
   "type": "module",
   "bin": {
-    "depctl": "./src/cli.ts"
+    "dep": "./src/cli.ts"
   },
   "scripts": {
-    "build": "bun build ./src/cli.ts --compile --outfile dist/depctl",
+    "build": "bun build ./src/cli.ts --compile --outfile dist/dep",
     "test": "bun test",
     "typecheck": "tsc --noEmit"
   },

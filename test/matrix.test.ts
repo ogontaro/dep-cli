@@ -15,7 +15,7 @@ import {
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "depctl-matrix-"));
+  dir = mkdtempSync(join(tmpdir(), "dep-matrix-"));
 });
 afterEach(() => {
   rmSync(dir, { recursive: true, force: true });
@@ -52,7 +52,7 @@ describe("resolveOrCreateMatrix", () => {
   test("matrix.yamlが無ければ--pivot相当の指定で新規作成する", () => {
     const { matrixPath, matrix } = resolveOrCreateMatrix("platform", dir);
     expect(matrix).toEqual(emptyMatrix("platform"));
-    expect(matrixPath).toBe(join(dir, ".depctl", "matrix.yaml"));
+    expect(matrixPath).toBe(join(dir, ".dep", "matrix.yaml"));
   });
 
   test("pivot未指定かつ新規なら例外", () => {
@@ -60,9 +60,9 @@ describe("resolveOrCreateMatrix", () => {
   });
 
   test("既存があれば読み込む(walk-upで親ディレクトリも探索する)", () => {
-    const depctlDir = join(dir, ".depctl");
-    mkdirSync(depctlDir, { recursive: true });
-    saveMatrix(join(depctlDir, "matrix.yaml"), emptyMatrix("platform"));
+    const depDir = join(dir, ".dep");
+    mkdirSync(depDir, { recursive: true });
+    saveMatrix(join(depDir, "matrix.yaml"), emptyMatrix("platform"));
 
     const nested = join(dir, "a", "b");
     mkdirSync(nested, { recursive: true });

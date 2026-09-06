@@ -2,11 +2,11 @@
 
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { DepctlConfig } from "./config.ts";
+import type { DepConfig } from "./config.ts";
 
 export type State = Record<string, string>; // component -> 読み取った生のバージョン文字列
 
-export function readState(root: string, config: DepctlConfig): State {
+export function readState(root: string, config: DepConfig): State {
   const state: State = {};
   for (const [name, cfg] of Object.entries(config.components)) {
     const filePath = join(root, cfg.source.file);

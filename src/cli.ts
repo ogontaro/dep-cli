@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// depctl: コンポーネント間のバージョン互換性(誰が誰の対応範囲を要求するか)を .depctl/matrix.yaml に人間/AIが
+// dep: コンポーネント間のバージョン互換性(誰が誰の対応範囲を要求するか)を .dep/matrix.yaml に人間/AIが
 // 記録し、リポジトリの実ファイルから読んだ現在バージョン(State)と突き合わせて機械判定する汎用CLI。
 
 import * as statusCmd from "./commands/status.ts";
@@ -11,21 +11,21 @@ import pkg from "../package.json" with { type: "json" };
 
 const VERSION = pkg.version;
 
-const HELP = `depctl ${VERSION} - component間のバージョン互換性を .depctl/matrix.yaml で機械的に検証するCLI
+const HELP = `dep ${VERSION} - component間のバージョン互換性を .dep/matrix.yaml で機械的に検証するCLI
 
 使い方:
-  depctl status                                  現在の各componentバージョンを表示する
-  depctl check                                   現在のStateをmatrixで検証する
-  depctl max <component>                         他componentを現在Stateに固定した場合の上限を表示する
-  depctl plan --set <component>=<version|max>    目標への順序付き経路を提示する
-  depctl matrix show [component]                 matrixを閲覧する
-  depctl matrix add <component> <version> ...    matrixに行を追記する(初回は --pivot が必要)
-  depctl matrix rm <component> <version>         matrixから行を削除する
-  depctl matrix validate                         matrixのスキーマ・整合性を検査する
-  depctl matrix outdated                         最新リリースに対しmatrix未収録の行を検知する
+  dep status                                  現在の各componentバージョンを表示する
+  dep check                                   現在のStateをmatrixで検証する
+  dep max <component>                         他componentを現在Stateに固定した場合の上限を表示する
+  dep plan --set <component>=<version|max>    目標への順序付き経路を提示する
+  dep matrix show [component]                 matrixを閲覧する
+  dep matrix add <component> <version> ...    matrixに行を追記する(初回は --pivot が必要)
+  dep matrix rm <component> <version>         matrixから行を削除する
+  dep matrix validate                         matrixのスキーマ・整合性を検査する
+  dep matrix outdated                         最新リリースに対しmatrix未収録の行を検知する
 
 全コマンド共通で --json を付けるとJSON出力になります。
-設定は cwd から親方向へ探索した .depctl/config.yaml (State読み取り設定) と .depctl/matrix.yaml (互換データ) を使います。`;
+設定は cwd から親方向へ探索した .dep/config.yaml (State読み取り設定) と .dep/matrix.yaml (互換データ) を使います。`;
 
 async function main(): Promise<void> {
   const [, , cmd, ...rest] = process.argv;
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
     case "matrix":
       return await matrixCmd.run(rest);
     default:
-      throw new Error(`不明なコマンドです: ${cmd}("depctl --help" を参照)`);
+      throw new Error(`不明なコマンドです: ${cmd}("dep --help" を参照)`);
   }
 }
 

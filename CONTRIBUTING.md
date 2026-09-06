@@ -9,7 +9,7 @@ mise install       # .mise.toml の bun をインストール
 mise run install   # bun install
 mise run test      # bun test
 mise run typecheck # tsc --noEmit
-mise run build     # dist/depctl に単一バイナリを生成
+mise run build     # dist/dep に単一バイナリを生成
 ```
 
 ## リポジトリ構成
@@ -38,13 +38,13 @@ mise run build     # dist/depctl に単一バイナリを生成
 
 1. `package.json` の `version` を semver で bump し `chore: release vX.Y.Z` としてコミット・push
 2. 同名 `vX.Y.Z` タグを push(`release.yml` が起動する)
-3. `release.yml` 完了後、`ogontaro/homebrew-tap` の `Formula/depctl.rb` の `version` と3つの
+3. `release.yml` 完了後、`ogontaro/homebrew-tap` の `Formula/dep.rb` の `version` と3つの
    `sha256`(Release の `checksums.txt` から取得。古い値を使い回さない)を更新して push
-4. `brew upgrade ogontaro/tap/depctl` で `depctl --version` が新バージョンを返すことを確認
+4. `brew upgrade ogontaro/tap/dep` で `dep --version` が新バージョンを返すことを確認
 
-- semver は `.depctl/matrix.yaml` / `config.yaml` のスキーマ互換性で判断する
+- semver は `.dep/matrix.yaml` / `config.yaml` のスキーマ互換性で判断する
   (スキーマ非互換・コマンド削除 = major、後方互換のコマンド/フラグ追加 = minor、バグ修正のみ = patch)
-- `depctl --version` は `package.json` の `version` を読む(二重管理しない)
+- `dep --version` は `package.json` の `version` を読む(二重管理しない)
 - README.md のみ / CI・ルールのみ など `src/` を含まない変更はリリース不要
 
 ## プラグインのバージョニング

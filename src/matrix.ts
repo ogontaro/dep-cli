@@ -1,5 +1,5 @@
-// .depctl/matrix.yaml の読み書き。
-// このファイルは環境非依存の互換性データそのもので、`depctl matrix add` 等のコマンドで組み立てる想定。
+// .dep/matrix.yaml の読み書き。
+// このファイルは環境非依存の互換性データそのもので、`dep matrix add` 等のコマンドで組み立てる想定。
 // 手編集も可能だが、保存時は常にcomponent/version順にソートして書き出し、出力を決定的にする。
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -7,7 +7,7 @@ import { join } from "node:path";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { compareMinor, toMinorKey } from "./version.ts";
 import { parseRange, type Range } from "./range.ts";
-import { findDepctlDir } from "./config.ts";
+import { findDepDir } from "./config.ts";
 
 export interface MatrixEntry {
   requires: Record<string, string>; // 対象component(基本はpivot) -> "min..max"
@@ -38,7 +38,7 @@ export function emptyMatrix(pivot: string): Matrix {
 export function loadMatrix(path: string): Matrix {
   if (!existsSync(path)) {
     throw new Error(
-      `matrixファイルが見つかりません: ${path}\n"depctl matrix add" で新規作成するか、既存の matrix.yaml を配置してください`,
+      `matrixファイルが見つかりません: ${path}\n"dep matrix add" で新規作成するか、既存の matrix.yaml を配置してください`,
     );
   }
   const raw = parseYaml(readFileSync(path, "utf8")) as Partial<Matrix> | null;
@@ -84,22 +84,22 @@ export function removeEntry(matrix: Matrix, component: string, version: string):
   return true;
 }
 
-// 既存の .depctl/matrix.yaml を(config.yamlの有無に関わらず)探して読み込む。matrix系サブコマンド用。
+// 既存の .dep/matrix.yaml を(config.yamlの有無に関わらず)探して読み込む。matrix系サブコマンド用。
 export function resolveMatrix(startDir: string = process.cwd()): { matrixPath: string; matrix: Matrix } {
-  const depctlDir = findDepctlDir(startDir);
-  const matrixPath = join(depctlDir, "matrix.yaml");
+  const depDir = findDepDir(startDir);
+  const matrixPath = join(depDir, "matrix.yaml");
   return { matrixPath, matrix: loadMatrix(matrixPath) };
 }
 
-// matrix.yamlが無ければ、cwd直下に .depctl/ を新規作成して空のmatrixを返す(コマンドだけでゼロから組み立てるため)。
+// matrix.yamlが無ければ、cwd直下に .dep/ を新規作成して空のmatrixを返す(コマンドだけでゼロから組み立てるため)。
 export function resolveOrCreateMatrix(pivotForNew: string | undefined, startDir: string = process.cwd()): { matrixPath: string; matrix: Matrix } {
-  let depctlDir: string;
+  let depDir: string;
   try {
-    depctlDir = findDepctlDir(startDir);
+    depDir = findDepDir(startDir);
   } catch {
-    depctlDir = join(startDir, ".depctl");
+    depDir = join(startDir, ".dep");
   }
-  const matrixPath = join(depctlDir, "matrix.yaml");
+  const matrixPath = join(depDir, "matrix.yaml");
   if (existsSync(matrixPath)) {
     return { matrixPath, matrix: loadMatrix(matrixPath) };
   }
@@ -108,6 +108,6 @@ export function resolveOrCreateMatrix(pivotForNew: string | undefined, startDir:
       `matrix.yaml がまだありません(${matrixPath})。新規作成する場合は最初の "matrix add" に --pivot <component> を付けてください`,
     );
   }
-  mkdirSync(depctlDir, { recursive: true });
+  mkdirSync(depDir, { recursive: true });
   return { matrixPath, matrix: emptyMatrix(pivotForNew) };
 }

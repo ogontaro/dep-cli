@@ -1,5 +1,5 @@
 // CLI全体の結線を確認するE2Eテスト。実際に `bun src/cli.ts <args>` をサブプロセスとして起動し、
-// 一時ディレクトリに置いた最小構成の .depctl/config.yaml + ソースファイルに対して動かす。
+// 一時ディレクトリに置いた最小構成の .dep/config.yaml + ソースファイルに対して動かす。
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -14,14 +14,14 @@ function run(cwd: string, args: string[]): { code: number; stdout: string; stder
 
 let dir: string;
 beforeEach(() => {
-  dir = mkdtempSync(join(tmpdir(), "depctl-cli-"));
-  mkdirSync(join(dir, ".depctl"), { recursive: true });
+  dir = mkdtempSync(join(tmpdir(), "dep-cli-"));
+  mkdirSync(join(dir, ".dep"), { recursive: true });
   writeFileSync(
     join(dir, "versions.txt"),
     "platform_version = v2.4.1\nmodule_a_version = 1.7.0\n",
   );
   writeFileSync(
-    join(dir, ".depctl", "config.yaml"),
+    join(dir, ".dep", "config.yaml"),
     [
       "version: 1",
       "components:",
@@ -37,7 +37,7 @@ beforeEach(() => {
     ].join("\n"),
   );
   writeFileSync(
-    join(dir, ".depctl", "matrix.yaml"),
+    join(dir, ".dep", "matrix.yaml"),
     [
       "version: 1",
       "pivot: platform",
@@ -70,7 +70,7 @@ test("check: 妥当ならexit 0", () => {
 test("check: 未収録componentがあればexit 1", () => {
   writeFileSync(join(dir, "versions.txt"), "platform_version = v2.4.1\nmodule_a_version = 1.7.0\nmodule_b_version = 9.9.0\n");
   writeFileSync(
-    join(dir, ".depctl", "config.yaml"),
+    join(dir, ".dep", "config.yaml"),
     [
       "version: 1",
       "components:",
@@ -116,7 +116,7 @@ test("matrix show/add/rm/validateが連携して動く", () => {
 });
 
 test("matrix add: matrix.yamlが無い状態でも--pivotで新規作成できる", () => {
-  const fresh = mkdtempSync(join(tmpdir(), "depctl-cli-fresh-"));
+  const fresh = mkdtempSync(join(tmpdir(), "dep-cli-fresh-"));
   try {
     const result = run(fresh, ["matrix", "add", "moduleA", "1.7", "--requires", "platform=2.2..2.4", "--pivot", "platform"]);
     expect(result.code).toBe(0);
@@ -130,7 +130,7 @@ test("matrix add: matrix.yamlが無い状態でも--pivotで新規作成でき�
 test("--help はコマンド一覧を表示する", () => {
   const result = run(dir, ["--help"]);
   expect(result.code).toBe(0);
-  expect(result.stdout).toContain("depctl");
+  expect(result.stdout).toContain("dep matrix add");
 });
 
 test("--version はpackage.jsonのversionと一致する(二重管理防止)", async () => {

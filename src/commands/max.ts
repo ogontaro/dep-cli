@@ -13,7 +13,7 @@ export function run(argv: string[]): void {
     allowPositionals: true,
   });
   const component = positionals[0];
-  if (!component) throw new Error("使い方: depctl max <component>");
+  if (!component) throw new Error("使い方: dep max <component>");
 
   const { root, config, matrixPath } = loadConfig();
   const state = readState(root, config);

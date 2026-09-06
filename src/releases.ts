@@ -35,7 +35,7 @@ export async function fetchLatestRelease(cfg: ReleasesConfig, fetchImpl: typeof 
 async function fetchLatestGithubRelease(cfg: ReleasesConfig, fetchImpl: typeof fetch): Promise<LatestRelease> {
   if (!cfg.repo) throw new Error("releases.type=github-releases には repo が必要です");
   const res = await fetchImpl(`https://api.github.com/repos/${cfg.repo}/releases?per_page=100`, {
-    headers: { "User-Agent": "depctl", Accept: "application/vnd.github+json" },
+    headers: { "User-Agent": "dep", Accept: "application/vnd.github+json" },
   });
   if (!res.ok) throw new Error(`GitHub Releases取得に失敗しました(HTTP ${res.status}): ${cfg.repo}`);
   const releases = (await res.json()) as GithubRelease[];

@@ -4,14 +4,14 @@ paths:
   - ".claude-plugin/**"
 ---
 
-# depctl pluginのバージョニングルール
+# dep pluginのバージョニングルール
 
 `skills/`配下(SKILL.md等)や `.claude-plugin/plugin.json` 本体の内容を**コミットする**ときは、
 そのコミットで `.claude-plugin/plugin.json` の `version` をセマンティックバージョニングで
 インクリメントする(文言修正・descriptionの微調整はpatch、トリガー条件追加やskill追加等の
 機能追加はminor、既存skillの削除・大幅な挙動変更はmajor)。
 
-このバージョンは `package.json`(depctl CLI本体のバージョン、`.claude/rules/release.md`参照)とは
+このバージョンは `package.json`(dep CLI本体のバージョン、`.claude/rules/release.md`参照)とは
 **別物**。plugin(skillの中身)がいつ変わったかを追うためのもので、CLIのリリースとは独立に上げる。
 
 バージョンを上げるのは、コミットする直前・コミットに含めるタイミングで1回だけ。まだコミットしていない
