@@ -116,20 +116,25 @@ components:
 - `.depctl/matrix.yaml` にドメインデータ(具体的なコンポーネント名や互換範囲)を1つも同梱しない。
   実データの投入は利用側リポジトリで `depctl matrix add` を使って行う
 
-## 開発
+## Claude Code プラグイン
 
-bun自体を含め、開発に使うツールは [mise](https://mise.jdx.dev/) で用意する(`.mise.toml`でバージョン固定)。
+このリポジトリは Claude Code のプラグインも兼ねています。インストールすると `build-compat-matrix`
+skill が有効になり、Claude が次を代行できるようになります。
+
+- `.depctl/` のあるリポジトリで `depctl status/check/max/plan` を適切に使う
+- 上流ドキュメント(各コンポーネントのサポートマトリクス等)を調べて `depctl matrix add` で
+  `.depctl/matrix.yaml` を埋める(調査はサブエージェントに委任、出典・取得日を必ず記録、
+  未確認なら推測せず「未確認」とする、といった手順が skill に定義されている)
+
+インストール(リポジトリを clone してディレクトリを指定する):
 
 ```sh
-mise install       # .mise.tomlのbunをインストール
-mise run install   # bun install
-mise run test      # bun test
-mise run typecheck # tsc --noEmit
-mise run build     # dist/depctl に単一バイナリを生成
+git clone https://github.com/ogontaro/dep-cli.git
+claude --plugin-dir ./dep-cli
 ```
 
-## リリース
+`~/.claude/skills/depctl/` に配置すると次のセッションから自動で有効になります。
 
-`vX.Y.Z` タグをpushすると `.github/workflows/release.yml` が3プラットフォーム分のバイナリを
-GitHub Releaseに公開する。Homebrew tap(`ogontaro/homebrew-tap`)側のformula更新までの
-詳しい手順は [`.claude/rules/release.md`](.claude/rules/release.md) を参照。
+## ライセンス
+
+MIT
