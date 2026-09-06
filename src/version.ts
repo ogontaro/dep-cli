@@ -28,3 +28,8 @@ export function compareMinor(a: string, b: string): number {
   if (va.major !== vb.major) return va.major - vb.major;
   return va.minor - vb.minor;
 }
+
+// "1.21.0-pre.0" / "v1.21.0-rc1" のようにバージョンコアの後ろにprerelease識別子が付くか。
+export function isPrerelease(input: string): boolean {
+  return /^v?\d+\.\d+(?:\.\d+)?-/.test(input.trim());
+}

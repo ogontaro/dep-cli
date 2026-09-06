@@ -38,6 +38,30 @@ entries:
   expect(result).toEqual({ minorKey: "1.20", version: "1.20.1", appVersion: "1.20.1" });
 });
 
+test("helm-index: prerelease(1.21.0-pre.0)は除外して安定版の最新を返す", async () => {
+  const index = `
+entries:
+  cilium:
+    - version: 1.20.1
+      appVersion: 1.20.1
+    - version: 1.21.0-pre.0
+      appVersion: 1.21.0-pre.0
+`;
+  const fakeFetch = (async () => textResponse(index)) as unknown as typeof fetch;
+  const result = await fetchLatestRelease({ type: "helm-index", url: "https://example.com/index.yaml", chart: "cilium" }, fakeFetch);
+  expect(result.minorKey).toBe("1.20");
+});
+
+test("github-releases: prerelease扱いされていない -rc タグも除外する", async () => {
+  const fakeFetch = (async () =>
+    jsonResponse([
+      { tag_name: "v1.21.0-rc1", prerelease: false, draft: false },
+      { tag_name: "v1.20.0", prerelease: false, draft: false },
+    ])) as unknown as typeof fetch;
+  const result = await fetchLatestRelease({ type: "github-releases", repo: "example/repo" }, fakeFetch);
+  expect(result).toEqual({ minorKey: "1.20", version: "v1.20.0" });
+});
+
 test("helm-index: chartが見つからなければ例外", async () => {
   const fakeFetch = (async () => textResponse("entries: {}")) as unknown as typeof fetch;
   await expect(

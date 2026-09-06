@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { compareMinor, parseMinorVersion, toMinorKey } from "../src/version.ts";
+import { compareMinor, isPrerelease, parseMinorVersion, toMinorKey } from "../src/version.ts";
 
 describe("parseMinorVersion", () => {
   test("v付き・パッチ付きを解釈できる", () => {
@@ -29,5 +29,18 @@ describe("compareMinor", () => {
   });
   test("等しい", () => {
     expect(compareMinor("v1.35.6", "1.35")).toBe(0);
+  });
+});
+
+describe("isPrerelease", () => {
+  test("prerelease識別子付きはtrue", () => {
+    expect(isPrerelease("1.21.0-pre.0")).toBe(true);
+    expect(isPrerelease("v1.21.0-rc1")).toBe(true);
+    expect(isPrerelease("1.21-beta")).toBe(true);
+  });
+  test("安定版はfalse", () => {
+    expect(isPrerelease("1.21.0")).toBe(false);
+    expect(isPrerelease("v1.20.1")).toBe(false);
+    expect(isPrerelease("1.20")).toBe(false);
   });
 });

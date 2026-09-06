@@ -3,7 +3,7 @@
 
 import { parse as parseYaml } from "yaml";
 import type { ReleasesConfig } from "./matrix.ts";
-import { parseMinorVersion } from "./version.ts";
+import { isPrerelease, parseMinorVersion } from "./version.ts";
 
 export interface LatestRelease {
   minorKey: string; // "1.20"
@@ -41,7 +41,7 @@ async function fetchLatestGithubRelease(cfg: ReleasesConfig, fetchImpl: typeof f
   const releases = (await res.json()) as GithubRelease[];
   let best: { tag: string; major: number; minor: number } | undefined;
   for (const r of releases) {
-    if (r.prerelease || r.draft) continue;
+    if (r.prerelease || r.draft || isPrerelease(r.tag_name)) continue;
     let mv;
     try {
       mv = parseMinorVersion(r.tag_name);
@@ -67,6 +67,7 @@ async function fetchLatestHelmRelease(cfg: ReleasesConfig, fetchImpl: typeof fet
   }
   let best: { version: string; appVersion: string | undefined; major: number; minor: number } | undefined;
   for (const e of entries) {
+    if (isPrerelease(e.version)) continue;
     let mv;
     try {
       mv = parseMinorVersion(e.version);
