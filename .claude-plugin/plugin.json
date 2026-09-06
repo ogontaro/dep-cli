@@ -1,7 +1,7 @@
 {
   "name": "dep",
   "description": "component間のバージョン互換性を.dep/matrix.yamlで検証・管理するCLI「dep」の使い方とmatrix構築手順を提供する",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": {
     "name": "ogontaro",
     "email": "uchigane.ryotaro@gmail.com"

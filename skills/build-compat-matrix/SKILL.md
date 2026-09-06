@@ -22,6 +22,10 @@ description: Use when working with dep — a CLI that checks version compatibili
 `dep plan --set <component>=<version|max>` で毎ホップ妥当な移行手順を得る。到達不可なら
 `reason`にその理由(どのcomponentが現在値と目標値を同時に満たせないか)が出る。
 
+`config.yaml`に`renovate:`が設定されていれば、`dep renovate sync`でその上限を
+renovate設定の`allowedVersions`(`// dep:allowedVersions <component>`マーカー付きのpackageRule)に
+書き戻せる。`--dry-run`で差分だけ確認できる。
+
 ## matrix.yamlを構築・拡充する(データが無い/古い場合)
 
 ユーザーから「〇〇の互換性を調べてmatrixに登録して」と頼まれたら、次の手順で進める。

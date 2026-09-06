@@ -11,8 +11,13 @@ export interface SourceConfig {
   pattern: string; // 名前付きキャプチャ (?<version>...) を含む正規表現
 }
 
+export interface RenovateBinding {
+  file: string; // renovate設定ファイルへの、リポジトリルートからの相対パス
+}
+
 export interface ComponentConfig {
   source: SourceConfig;
+  renovate?: RenovateBinding; // `dep renovate sync` が allowedVersions を書き込む先
 }
 
 export interface DepConfig {

@@ -7,6 +7,7 @@ import * as checkCmd from "./commands/check.ts";
 import * as maxCmd from "./commands/max.ts";
 import * as planCmd from "./commands/plan.ts";
 import * as matrixCmd from "./commands/matrix/index.ts";
+import * as renovateCmd from "./commands/renovate/index.ts";
 import pkg from "../package.json" with { type: "json" };
 
 const VERSION = pkg.version;
@@ -23,6 +24,7 @@ const HELP = `dep ${VERSION} - component間のバージョン互換性を .dep/m
   dep matrix rm <component> <version>         matrixから行を削除する
   dep matrix validate                         matrixのスキーマ・整合性を検査する
   dep matrix outdated                         最新リリースに対しmatrix未収録の行を検知する
+  dep renovate sync [--dry-run]               renovate設定の allowedVersions を dep max の結果に更新する
 
 全コマンド共通で --json を付けるとJSON出力になります。
 設定は cwd から親方向へ探索した .dep/config.yaml (State読み取り設定) と .dep/matrix.yaml (互換データ) を使います。`;
@@ -50,6 +52,8 @@ async function main(): Promise<void> {
       return planCmd.run(rest);
     case "matrix":
       return await matrixCmd.run(rest);
+    case "renovate":
+      return renovateCmd.run(rest);
     default:
       throw new Error(`不明なコマンドです: ${cmd}("dep --help" を参照)`);
   }

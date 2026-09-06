@@ -58,6 +58,8 @@ components:
     source:
       file: kubernetes/clusters/mycluster/cilium/helmfile.yaml
       pattern: 'chart:\s*cilium/cilium[\s\S]*?version:\s*(?<version>\S+)'
+    renovate:                       # `dep renovate sync` の対象にする(任意)
+      file: renovate.json5
 ```
 
 `pattern` は名前付きキャプチャ `(?<version>...)` を1つ含む正規表現です。
@@ -84,6 +86,7 @@ dep plan --set kubernetes=1.36   # 目標への、毎ホップMatrix妥当な順
 | `dep matrix rm <component> <version>` | matrixから行を削除する |
 | `dep matrix validate` | matrixのスキーマ・整合性を検査する |
 | `dep matrix outdated` | `releases`に設定した各componentの最新リリースに対し、matrix未収録のマイナーバージョンを検知する |
+| `dep renovate sync [--dry-run]` | `config.yaml`で`renovate:`を設定した各componentの`dep max`を計算し、renovate設定の`allowedVersions`を更新する |
 
 全コマンド共通で `--json` を付けるとJSON出力になります(スクリプト連携・CI用)。
 `check` / `matrix validate` / `matrix outdated` は違反や未収録があると終了コード非ゼロを返します。
@@ -108,6 +111,27 @@ components:
       # appVersion のような任意の追加フィールドも --extra で保存できる
       # (helm chartバージョンと本体appVersionがズレるcomponent向け)
 ```
+
+## renovate連携(`dep renovate sync`)
+
+`config.yaml` で `renovate: { file: ... }` を設定した各 component について、`dep max <component>`
+(pivot は全体の交差、それ以外は現在の pivot を含む最上位)を計算し、renovate 設定ファイル内の
+`allowedVersions` を `<次のマイナー`(例: 上限 1.34 → `"<1.35"`)に書き換えます。
+
+対象の packageRule には、オブジェクトの先頭に **マーカーコメント** を1行足しておきます:
+
+```json5
+"packageRules": [
+  {
+    // dep:allowedVersions kubernetes
+    "matchPackageNames": ["kubernetes/kubernetes"],
+    "allowedVersions": "<1.34"   // dep が維持する。無ければマーカー直後に挿入される
+  }
+]
+```
+
+`dep` はこのマーカー直後のオブジェクト内の `allowedVersions` だけをテキスト置換するので、
+コメントや他の設定は保持されます。`--dry-run` で差分プレビュー(変更ありなら終了コード非ゼロ)。
 
 ## 制約(v1スコープ)
 

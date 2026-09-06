@@ -20,6 +20,7 @@ mise run build     # dist/dep に単一バイナリを生成
 | `src/commands/` | 各サブコマンド |
 | `src/compat.ts` | check / max / plan の中核ロジック |
 | `src/releases.ts` | `matrix outdated` 用の最新リリース取得(github-releases / helm-index) |
+| `src/renovate.ts` | `renovate sync` 用の allowedVersions テキスト置換(json5コメントを壊さない) |
 | `test/` | `bun test`(unit + CLI サブプロセスの E2E) |
 | `skills/build-compat-matrix/` | Claude Code プラグインの skill |
 | `.claude-plugin/plugin.json` | プラグインマニフェスト |
