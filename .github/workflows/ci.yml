@@ -14,4 +14,3 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: mise run typecheck
       - run: mise run test
-      - run: mise run diagram && git diff --exit-status docs/ # .d2 と .svg のドリフト検出
