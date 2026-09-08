@@ -1,5 +1,5 @@
 ---
-name: build-compat-matrix
+name: dep-usage
 description: Use when working with dep — a CLI that checks version compatibility across interdependent components (e.g. kubernetes/CNI/cert-manager-style addons) via a `.dep/matrix.yaml`. Trigger when a `.dep/` directory exists in the repository, when the user asks whether/how to upgrade one component given the others ("このバージョンまで上げても大丈夫か", "アップグレード経路を教えて", "上限を調べて"), or wants matrix.yaml populated with upstream compatibility data ("互換性データを調べてmatrixに登録して", "matrix.yamlを埋めて", "matrixに追加して").
 ---
 

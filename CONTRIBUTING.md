@@ -23,7 +23,7 @@ mise run diagram   # docs/concepts.d2 → docs/concepts.svg を再生成
 | `src/releases.ts` | `matrix outdated` 用の最新リリース取得(github-releases / helm-index) |
 | `src/renovate.ts` | `renovate sync` 用の allowedVersions テキスト置換(json5コメントを壊さない) |
 | `test/` | `bun test`(unit + CLI サブプロセスの E2E) |
-| `skills/build-compat-matrix/` | Claude Code プラグインの skill |
+| `skills/dep-usage/` | Claude Code プラグインの skill |
 | `.claude-plugin/plugin.json` | プラグインマニフェスト |
 | `.claude/rules/` | このリポジトリで作業する Claude 向けの条件付きルール |
 

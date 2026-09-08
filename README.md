@@ -7,7 +7,7 @@ Kubernetes の範囲が決まっていて、個別に上げると壊れます。
 1つの表(`.dep/matrix.yaml`)に持ち、いま何をどこまで上げてよいかを答えます。
 
 **表は AI に作らせる前提です。** 上流ドキュメント(サポートマトリクス等)を調べて表に落とす作業は、
-同梱の Claude Code プラグイン(`build-compat-matrix` skill)が担当します。人間が書くのは
+同梱の Claude Code プラグイン(`dep-usage` skill)が担当します。人間が書くのは
 「現在バージョンの読み取り方」だけです。
 
 ```
@@ -65,7 +65,7 @@ components:
 
 > cilium と kubernetes の互換性を調べて matrix に入れて
 
-`build-compat-matrix` skill が上流の公式ドキュメントを調べ、`dep matrix add` を実行して
+`dep-usage` skill が上流の公式ドキュメントを調べ、`dep matrix add` を実行して
 `.dep/matrix.yaml` を組み立てます(出典 URL と取得日も記録されます)。手で書くこともできますが、
 基本は AI 任せです。
 
@@ -140,7 +140,7 @@ components:
 
 ## Claude Code プラグイン
 
-このリポジトリ自体が Claude Code プラグインです。インストールすると `build-compat-matrix` skill が
+このリポジトリ自体が Claude Code プラグインです。インストールすると `dep-usage` skill が
 有効になり、`dep` のコマンド操作と matrix 構築(上流調査 → `dep matrix add`)を Claude が代行します。
 
 ```sh
