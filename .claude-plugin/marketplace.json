@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "dep-cli",
+  "description": "dep CLI の使い方とmatrix構築手順を提供する plugin",
+  "owner": {
+    "name": "ogontaro"
+  },
+  "plugins": [
+    {
+      "name": "dep",
+      "description": "component間のバージョン互換性を.dep/matrix.yamlで検証・管理するCLI「dep」の使い方とmatrix構築手順を提供する",
+      "source": "./",
+      "category": "development"
+    }
+  ]
+}
